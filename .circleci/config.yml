@@ -74,8 +74,8 @@ jobs:
       - heroku/install
       - checkout
       - docker/check:
-          docker-username: DOCKERHUB_LOGIN
-          docker-password: DOCKERHUB_PASSWORD
+          docker-username: DOCKER_USER
+          docker-password: DOCKER_PASSWORD
       - run:
           name: Deploy to Heroku
           command: |
