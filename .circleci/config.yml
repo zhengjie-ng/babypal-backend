@@ -36,6 +36,11 @@ jobs:
             - target/
             - Dockerfile
             - .dockerignore
+            - .mvn/
+            - mvnw
+            - mvnw.cmd
+            - pom.xml
+            - src/
 
   docker-build-and-push:
     docker:
