@@ -2,17 +2,22 @@
 FROM maven:3.9-eclipse-temurin-17-alpine as builder
 WORKDIR /app
 
-# Debug: List contents before copy
-RUN pwd && ls -la
+# Copy Maven wrapper files
+COPY .mvn/ .mvn/
+COPY mvnw mvnw.cmd ./
+COPY pom.xml ./
 
-# Copy the entire project
-COPY . .
+# Make maven wrapper executable
+RUN chmod +x mvnw
 
-# Debug: List contents after copy
-RUN pwd && ls -la
+# Copy source code
+COPY src ./src/
 
-# Build the application
-RUN mvn clean package -DskipTests
+# Show contents for debugging
+RUN echo "Contents of /app:" && ls -la
+
+# Build the application using Maven wrapper
+RUN ./mvnw clean package -DskipTests
 
 # Stage 2: Create the runtime image
 FROM eclipse-temurin:17-jre-alpine
