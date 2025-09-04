@@ -3,16 +3,11 @@ version: 2.1
 orbs:
   docker: circleci/docker@2.1.4
 
-jobs:
-  build-and-test:
-    docker:
-      - image: cimg/openjdk:17.0
-        auth:
-          username: $DOCKER_USER
-          password: $DOCKER_PASSWORD
+# Commands - reusable sets of steps
+commands:
+  maven_install:
     steps:
       - checkout
-      - setup_remote_docker
       - restore_cache:
           keys:
             - v1-dependencies-{{ checksum "pom.xml" }}
@@ -24,9 +19,13 @@ jobs:
           paths:
             - ~/.m2
           key: v1-dependencies-{{ checksum "pom.xml" }}
-      - run:
-          name: Run Tests
-          command: mvn test
+
+jobs:
+  build:
+    docker:
+      - image: cimg/openjdk:17.0
+    steps:
+      - maven_install
       - run:
           name: Build Package
           command: mvn clean package -DskipTests
@@ -42,27 +41,41 @@ jobs:
             - pom.xml
             - src/
 
-  docker-build-and-push:
+  test:
     docker:
-      - image: cimg/base:stable
+      - image: cimg/openjdk:17.0
+    steps:
+      - maven_install
+      - run:
+          name: Run Tests
+          command: mvn test
+
+  publish:
+    executor: docker/docker
     steps:
       - setup_remote_docker
       - attach_workspace:
           at: .
+      - docker/check:
+          docker-username: DOCKER_USER
+          docker-password: DOCKER_PASSWORD
       - docker/build:
-          image: $DOCKER_IMAGE
-          tag: latest
+          image: DOCKER_IMAGE
+          tag: << pipeline.git.revision >>,latest
       - docker/push:
-          image: $DOCKER_IMAGE
-          tag: latest
+          image: DOCKER_IMAGE
+          tag: << pipeline.git.revision >>,latest
 
 workflows:
-  build-test-deploy:
+  build-test-publish:
     jobs:
-      - build-and-test
-      - docker-build-and-push:
+      - build
+      - test:
           requires:
-            - build-and-test
+            - build
+      - publish:
+          requires:
+            - test
           filters:
             branches:
               only: main
