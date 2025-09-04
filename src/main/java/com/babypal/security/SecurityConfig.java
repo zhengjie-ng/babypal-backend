@@ -37,28 +37,6 @@ public class SecurityConfig {
         return new AuthTokenFilter();
     }
 
-    // @Bean
-    // public SecurityFilterChain customSecurityFilterChain(HttpSecurity http)
-    // throws Exception {
-    // return http
-    // .cors(withDefaults())
-    // .csrf(csrf -> csrf.csrfTokenRepository(
-    // CookieCsrfTokenRepository.withHttpOnlyFalse())
-    // .ignoringRequestMatchers("/api/auth/public/**"))
-    // .authorizeHttpRequests((requests) -> requests
-    // .requestMatchers("/api/admin/**").hasRole("ADMIN")
-    // .requestMatchers("/api/auth/public/**").permitAll()
-    // .requestMatchers("/api/csrf-token").permitAll()
-    // .anyRequest().authenticated())
-    // .exceptionHandling(e -> e.authenticationEntryPoint(unauthorizedHandler))
-    // .addFilterBefore(
-    // authenticationJwtTokenFilter(),
-    // UsernamePasswordAuthenticationFilter.class)
-    // .formLogin(withDefaults())
-    // .httpBasic(withDefaults())
-    // .build();
-    // }
-
     @Bean
     public SecurityFilterChain customSecurityFilterChain(HttpSecurity http)
             throws Exception {

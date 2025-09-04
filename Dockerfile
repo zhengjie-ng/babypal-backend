@@ -27,7 +27,8 @@ COPY --from=builder /app/target/*.jar app.jar
 # Declare environment variables without values
 ENV DATABASE_URL=""
 ENV JWT_SECRET=""
-ENV FRONTEND_URL=""
+ENV FRONTEND_DEV_URL=""
+ENV FRONTEND_PROD_URL=""
 ENV MAIL_USERNAME=""
 ENV MAIL_PASSWORD=""
 

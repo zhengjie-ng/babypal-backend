@@ -2,6 +2,7 @@ version: 2.1
 
 orbs:
   docker: circleci/docker@2.1.4
+  heroku: circleci/heroku@2.0.0
 
 # Commands - reusable sets of steps
 commands:
@@ -65,6 +66,31 @@ jobs:
       - docker/push:
           image: $DOCKER_IMAGE
           tag: << pipeline.git.revision >>,latest
+  deploy:
+    docker:
+      - image: cimg/node:16.10
+    steps:
+      - setup_remote_docker
+      - heroku/install
+      - checkout
+      - docker/check:
+          docker-username: DOCKERHUB_LOGIN
+          docker-password: DOCKERHUB_PASSWORD
+      - run:
+          name: Deploy to Heroku
+          command: |
+            echo "Deploying pre-built image to Heroku..."
+            heroku container:login
+            # Use Heroku container stack
+            heroku stack:set container --app babypal
+            # Pull image that was built in publish job
+            docker pull $DOCKER_IMAGE:<< pipeline.git.revision >>
+            # Tag it for Heroku
+            docker tag $DOCKER_IMAGE:<< pipeline.git.revision >> registry.heroku.com/babypal/web
+            # Push to Heroku Container Registry
+            docker push registry.heroku.com/babypal/web
+            # Release the pushed Docker image
+            heroku container:release web --app babypal
 
 workflows:
   build-test-publish:
@@ -76,6 +102,6 @@ workflows:
       - publish:
           requires:
             - test
-          filters:
-            branches:
-              only: main
+      - deploy:
+          requires:
+            - publish

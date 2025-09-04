@@ -12,6 +12,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${frontend.url}")
     private String frontendUrl;
 
+
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
