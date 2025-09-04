@@ -52,8 +52,6 @@ jobs:
 
   publish:
     executor: docker/docker
-    environment:
-      DOCKER_IMAGE: nzj002/babypal-backend
     steps:
       - setup_remote_docker
       - attach_workspace:
