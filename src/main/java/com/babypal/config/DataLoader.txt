@@ -1,0 +1,601 @@
+package com.babypal.config;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+
+import com.babypal.models.AppRole;
+import com.babypal.models.Baby;
+import com.babypal.models.Role;
+import com.babypal.models.User;
+import com.babypal.models.Record;
+import com.babypal.models.Measurement;
+import com.babypal.repositories.BabyRepository;
+import com.babypal.repositories.RecordRepository;
+import com.babypal.repositories.RoleRepository;
+import com.babypal.repositories.UserRepository;
+import com.babypal.repositories.MeasurementRepository;
+
+import jakarta.annotation.PostConstruct;
+
+
+@Component
+public class DataLoader {
+
+    private final RoleRepository roleRepository;
+    private final UserRepository userRepository;
+    private final RecordRepository recordRepository;
+    private final BabyRepository babyRepository;
+    private final MeasurementRepository measurementRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public DataLoader(RoleRepository roleRepository, 
+                    UserRepository userRepository, 
+                    PasswordEncoder passwordEncoder, 
+                    BabyRepository babyRepository, 
+                    RecordRepository recordRepository,
+                    MeasurementRepository measurementRepository) {
+        this.roleRepository = roleRepository;
+        this.userRepository = userRepository;
+        this.recordRepository = recordRepository;
+        this.babyRepository = babyRepository;
+        this.measurementRepository = measurementRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @PostConstruct
+    public void loadData() {
+
+        Role userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
+                .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_USER)));
+
+        Role adminRole = roleRepository.findByRoleName(AppRole.ROLE_ADMIN)
+                .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_ADMIN)));
+
+
+        if (!userRepository.existsByUserName("Admin")) {
+
+            userRepository.save(User.builder()
+                    .userName("admin")
+                    .password(passwordEncoder.encode("Admin@1234"))
+                    .email("babypalsg@gmail.com")
+                    .accountNonLocked(true)
+                    .accountNonExpired(true)
+                    .credentialsNonExpired(true)
+                    .credentialsExpiryDate(LocalDate.now().plusYears(100))
+                    .accountExpiryDate(LocalDate.now().plusYears(100))
+                    .isTwoFactorEnabled(false)
+                    .signUpMethod("email")
+                    .role(adminRole)
+                    .build());
+                    
+        }
+
+        if (!userRepository.existsByUserName("zhengjie")) {
+            userRepository.save(User.builder()
+                    .userName("zhengjie")
+                    .password(passwordEncoder.encode("Zhengjie@1234"))
+                    .email("zhengjie.zjie@gmail.com")
+                    .accountNonLocked(true)
+                    .accountNonExpired(true)
+                    .credentialsNonExpired(true)
+                    .credentialsExpiryDate(LocalDate.now().plusYears(100))
+                    .accountExpiryDate(LocalDate.now().plusYears(100))
+                    .isTwoFactorEnabled(false)
+                    .signUpMethod("email")
+                    .role(adminRole)
+                    .build());
+                    
+        }
+        if (!userRepository.existsByUserName("alan")) {
+            userRepository.save(User.builder()
+                    .userName("alan")
+                    .password(passwordEncoder.encode("Alan@1234"))
+                    .email("alan@babypal.com")
+                    .accountNonLocked(true)
+                    .accountNonExpired(true)
+                    .credentialsNonExpired(true)
+                    .credentialsExpiryDate(LocalDate.now().plusYears(100))
+                    .accountExpiryDate(LocalDate.now().plusYears(100))
+                    .isTwoFactorEnabled(false)
+                    .signUpMethod("email")
+                    .role(userRole)
+                    .build());
+                    
+        }
+
+        Baby baby1 = babyRepository.save(Baby.builder()
+                .name("Skylar")
+                .gender("male")
+                .dateOfBirth(LocalDateTime.of(2024, 7, 26, 11, 1))
+                .weight(9.6)
+                .height(75.7)
+                .headCircumference(44.9)
+                .caregivers(Arrays.asList("alan")) 
+                .owner("alan")
+                .build());
+
+        Baby baby2 = babyRepository.save(Baby.builder()
+                .name("Kayla")
+                .gender("female")
+                .dateOfBirth(LocalDateTime.of(2025, 8, 2, 14, 31))
+                .weight(4.0)
+                .height(53.5)
+                .headCircumference(36.5)
+                .caregivers(Arrays.asList("alan")) 
+                .owner("alan")
+                .build());
+
+
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 11, 1))
+                .endTime(LocalDateTime.of(2025, 9, 2, 11, 21))
+                .type("feeding")
+                .subType("breastfeed")
+                .note("Baby was very hungry and fed well.")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 14, 1))
+                .endTime(LocalDateTime.of(2025, 9, 2, 14, 21))
+                .type("feeding")
+                .subType("bottle")
+                .note("Baby was very hungry and fed well.")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 8, 15))
+                .type("diaper change")
+                .subType("wet")
+                .note("Baby's diaper was wet and changed.")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 12, 19))
+                .type("diaper change")
+                .subType("solid")
+                .note("Baby's diaper was solid and changed.")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 1, 8, 31))
+                .endTime(LocalDateTime.of(2025, 9, 2, 3, 27))
+                .type("sleep")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 10, 16))
+                .endTime(LocalDateTime.of(2025, 9, 2, 10, 52))
+                .type("sleep")
+                .build());
+
+        // Morning records
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 6, 30))
+                .endTime(LocalDateTime.of(2025, 9, 2, 6, 50))
+                .type("feeding")
+                .subType("breastfeed")
+                .note("Morning feed")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 7, 00))
+                .type("diaper change")
+                .subType("wet")
+                .note("Morning diaper change")
+                .build());
+
+        // Mid-morning records
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 9, 30))
+                .endTime(LocalDateTime.of(2025, 9, 2, 9, 45))
+                .type("feeding")
+                .subType("bottle")
+                .note("Formula feed")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 10, 00))
+                .endTime(LocalDateTime.of(2025, 9, 2, 11, 30))
+                .type("sleep")
+                .note("Morning nap")
+                .build());
+
+        // Afternoon records
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 12, 15))
+                .type("diaper change")
+                .subType("solid")
+                .note("After nap change")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 13, 00))
+                .endTime(LocalDateTime.of(2025, 9, 2, 13, 20))
+                .type("feeding")
+                .subType("self")
+                .note("Lunch time - tried mashed banana")
+                .build());
+
+        // Evening records
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 19, 00))
+                .endTime(LocalDateTime.of(2025, 9, 2, 19, 20))
+                .type("feeding")
+                .subType("breastfeed")
+                .note("Evening feed before bed")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 19, 30))
+                .type("diaper change")
+                .subType("wet")
+                .note("Bedtime diaper change")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 20, 00))
+                .endTime(LocalDateTime.of(2025, 9, 2, 23, 00))
+                .type("sleep")
+                .note("Night sleep")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 9, 30))
+                .endTime(LocalDateTime.of(2025, 9, 2, 9, 45))
+                .type("others")
+                .note("Baby had tummy time")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 13, 15))
+                .type("others")
+                .note("Gave vitamin D drops")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 15, 30))
+                .endTime(LocalDateTime.of(2025, 9, 2, 15, 45))
+                .type("others")
+                .note("Baby had bath time")
+                .build());
+
+        // Records for baby1 (Skylar)
+        recordRepository.save(Record.builder()
+                .baby(baby1)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 7, 30))
+                .endTime(LocalDateTime.of(2025, 9, 2, 7, 50))
+                .type("feeding")
+                .subType("self")
+                .note("Ate breakfast - oatmeal with banana")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby1)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 8, 00))
+                .type("diaper change")
+                .subType("wet")
+                .note("Morning routine change")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby1)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 12, 30))
+                .endTime(LocalDateTime.of(2025, 9, 2, 13, 00))
+                .type("feeding")
+                .subType("self")
+                .note("Lunch - rice porridge with vegetables")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby1)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 13, 30))
+                .endTime(LocalDateTime.of(2025, 9, 2, 15, 00))
+                .type("sleep")
+                .note("Afternoon nap")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby1)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 15, 15))
+                .type("diaper change")
+                .subType("solid")
+                .note("After nap change")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby1)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 16, 00))
+                .type("others")
+                .note("Played with building blocks")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby1)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 18, 30))
+                .endTime(LocalDateTime.of(2025, 9, 2, 19, 00))
+                .type("feeding")
+                .subType("self")
+                .note("Dinner - mashed potatoes and carrots")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby1)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 19, 30))
+                .type("others")
+                .note("Bath time and bedtime routine")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby1)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 2, 20, 00))
+                .endTime(LocalDateTime.of(2025, 9, 2, 6, 30))
+                .type("sleep")
+                .note("Night sleep")
+                .build());
+
+        // September 1 records for baby1 (Skylar)
+        recordRepository.save(Record.builder()
+                .baby(baby1)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 1, 7, 00))
+                .endTime(LocalDateTime.of(2025, 9, 1, 7, 30))
+                .type("feeding")
+                .subType("self")
+                .note("Breakfast - Cereal with milk")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby1)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 1, 8, 00))
+                .type("diaper change")
+                .subType("wet")
+                .note("Morning change")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby1)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 1, 12, 00))
+                .endTime(LocalDateTime.of(2025, 9, 1, 12, 30))
+                .type("feeding")
+                .subType("self")
+                .note("Lunch - Fish porridge")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby1)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 1, 13, 00))
+                .endTime(LocalDateTime.of(2025, 9, 1, 14, 30))
+                .type("sleep")
+                .note("Afternoon nap")
+                .build());
+
+        // September 1 records for baby2 (Kayla)
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 1, 6, 30))
+                .endTime(LocalDateTime.of(2025, 9, 1, 6, 45))
+                .type("feeding")
+                .subType("breastfeed")
+                .note("Early morning feed")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 1, 7, 00))
+                .type("diaper change")
+                .subType("wet")
+                .note("Morning diaper change")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 1, 9, 30))
+                .endTime(LocalDateTime.of(2025, 9, 1, 9, 45))
+                .type("feeding")
+                .subType("bottle")
+                .note("Formula feed - 120ml")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 1, 10, 00))
+                .type("others")
+                .note("Tummy time and massage")
+                .build());
+
+        recordRepository.save(Record.builder()
+                .baby(baby2)
+                .author("alan")
+                .startTime(LocalDateTime.of(2025, 9, 1, 12, 30))
+                .type("diaper change")
+                .subType("solid")
+                .note("After feed change")
+                .build());
+
+        // Measurements for baby1 (Skylar)
+        measurementRepository.save(Measurement.builder()
+                .baby(baby1)
+                .author("alan")
+                .time(LocalDateTime.of(2024, 7, 26, 11, 0)) // Birth
+                .weight(3.5)
+                .height(50.2)
+                .headCircumference(35.1)
+                .build());
+
+        measurementRepository.save(Measurement.builder()
+                .baby(baby1)
+                .author("alan")
+                .time(LocalDateTime.of(2024, 8, 26, 14, 30)) // 1 month
+                .weight(4.3)
+                .height(54.5)
+                .headCircumference(37.2)
+                .build());
+
+        measurementRepository.save(Measurement.builder()
+                .baby(baby1)
+                .author("alan")
+                .time(LocalDateTime.of(2024, 9, 26, 15, 0)) // 2 months
+                .weight(5.2)
+                .height(57.8)
+                .headCircumference(38.9)
+                .build());
+
+        // Additional measurements for baby1 (Skylar)
+        measurementRepository.save(Measurement.builder()
+                .baby(baby1)
+                .author("alan")
+                .time(LocalDateTime.of(2024, 10, 26, 14, 30)) // 3 months
+                .weight(6.1)
+                .height(61.2)
+                .headCircumference(40.3)
+                .build());
+
+        measurementRepository.save(Measurement.builder()
+                .baby(baby1)
+                .author("alan")
+                .time(LocalDateTime.of(2024, 11, 26, 15, 15)) // 4 months
+                .weight(6.8)
+                .height(63.5)
+                .headCircumference(41.4)
+                .build());
+
+        measurementRepository.save(Measurement.builder()
+                .baby(baby1)
+                .author("alan")
+                .time(LocalDateTime.of(2024, 12, 26, 14, 45)) // 5 months
+                .weight(7.3)
+                .height(65.8)
+                .headCircumference(42.2)
+                .build());
+
+        measurementRepository.save(Measurement.builder()
+                .baby(baby1)
+                .author("alan")
+                .time(LocalDateTime.of(2025, 1, 26, 15, 30)) // 6 months
+                .weight(7.8)
+                .height(67.9)
+                .headCircumference(43.0)
+                .build());
+
+        measurementRepository.save(Measurement.builder()
+                .baby(baby1)
+                .author("alan")
+                .time(LocalDateTime.of(2025, 7, 26, 11, 00)) // 12 months
+                .weight(9.6)
+                .height(75.7)
+                .headCircumference(44.9)
+                .build());
+
+        // Measurements for baby2 (Kayla)
+        measurementRepository.save(Measurement.builder()
+                .baby(baby2)
+                .author("alan")
+                .time(LocalDateTime.of(2025, 8, 2, 14, 31)) // Birth
+                .weight(3.2)
+                .height(49.5)
+                .headCircumference(34.8)
+                .build());
+
+        measurementRepository.save(Measurement.builder()
+                .baby(baby2)
+                .author("alan")
+                .time(LocalDateTime.of(2025, 9, 2, 10, 0)) // 1 month
+                .weight(4.0)
+                .height(53.5)
+                .headCircumference(36.5)
+                .build());
+
+        // Additional measurements for baby2 (Kayla)
+        measurementRepository.save(Measurement.builder()
+                .baby(baby2)
+                .author("alan")
+                .time(LocalDateTime.of(2025, 8, 9, 14, 30)) // 1 week
+                .weight(3.1)
+                .height(50.0)
+                .headCircumference(35.2)
+                .build());
+
+        measurementRepository.save(Measurement.builder()
+                .baby(baby2)
+                .author("alan")
+                .time(LocalDateTime.of(2025, 8, 16, 15, 00)) // 2 weeks
+                .weight(3.4)
+                .height(51.0)
+                .headCircumference(35.6)
+                .build());
+
+        measurementRepository.save(Measurement.builder()
+                .baby(baby2)
+                .author("alan")
+                .time(LocalDateTime.of(2025, 8, 23, 14, 45)) // 3 weeks
+                .weight(3.7)
+                .height(52.0)
+                .headCircumference(36.0)
+                .build());
+
+        measurementRepository.save(Measurement.builder()
+                .baby(baby2)
+                .author("alan")
+                .time(LocalDateTime.of(2025, 8, 30, 10, 30)) // 4 weeks
+                .weight(3.9)
+                .height(53.0)
+                .headCircumference(36.3)
+                .build());
+    }
+}
