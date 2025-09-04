@@ -52,6 +52,8 @@ jobs:
 
   publish:
     executor: docker/docker
+    environment:
+      DOCKER_IMAGE: nzj002/babypal-backend
     steps:
       - setup_remote_docker
       - attach_workspace:
@@ -60,10 +62,10 @@ jobs:
           docker-username: DOCKER_USER
           docker-password: DOCKER_PASSWORD
       - docker/build:
-          image: DOCKER_IMAGE
+          image: $DOCKER_IMAGE
           tag: << pipeline.git.revision >>,latest
       - docker/push:
-          image: DOCKER_IMAGE
+          image: $DOCKER_IMAGE
           tag: << pipeline.git.revision >>,latest
 
 workflows:
