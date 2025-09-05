@@ -84,9 +84,9 @@ jobs:
             # Use Heroku container stack
             heroku stack:set container --app babypal
             # Pull image that was built in publish job
-            docker pull $DOCKER_IMAGE:<< pipeline.git.revision >>
+            docker pull nzj002/babypal-backend:<< pipeline.git.revision >>
             # Tag it for Heroku
-            docker tag $DOCKER_IMAGE:<< pipeline.git.revision >> registry.heroku.com/babypal/web
+            docker tag nzj002/babypal-backend:<< pipeline.git.revision >> registry.heroku.com/babypal/web
             # Push to Heroku Container Registry
             docker push registry.heroku.com/babypal/web
             # Release the pushed Docker image
