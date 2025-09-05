@@ -125,16 +125,17 @@ public class AuthController {
                 role = roleRepository.findByRoleName(AppRole.ROLE_USER)
                         .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
             }
-
-            user.setAccountNonLocked(true);
-            user.setAccountNonExpired(true);
-            user.setCredentialsNonExpired(true);
-            user.setEnabled(true);
-            user.setCredentialsExpiryDate(LocalDate.now().plusYears(1));
-            user.setAccountExpiryDate(LocalDate.now().plusYears(1));
-            user.setTwoFactorEnabled(false);
-            user.setSignUpMethod("email");
         }
+
+        // Set default account settings for all new users
+        user.setAccountNonLocked(true);
+        user.setAccountNonExpired(true);
+        user.setCredentialsNonExpired(true);
+        user.setEnabled(true);
+        user.setCredentialsExpiryDate(LocalDate.now().plusYears(1));
+        user.setAccountExpiryDate(LocalDate.now().plusYears(1));
+        user.setTwoFactorEnabled(false);
+        user.setSignUpMethod("email");
         user.setRole(role);
         userRepository.save(user);
 
