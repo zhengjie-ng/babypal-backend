@@ -32,8 +32,9 @@ ENV FRONTEND_PROD_URL=""
 ENV MAIL_USERNAME=""
 ENV MAIL_PASSWORD=""
 
-# Expose the port the app runs on
-EXPOSE 8080
+# Make port configurable via environment variable
+ENV PORT=8080
+EXPOSE ${PORT}
 
-# Command to run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Command to run the application with explicit profile and port settings
+ENTRYPOINT ["sh", "-c", "java -jar -Dspring.profiles.active=prod -Dserver.port=${PORT} app.jar"]
