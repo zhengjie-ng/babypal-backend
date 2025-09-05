@@ -24,17 +24,11 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 
-# Declare environment variables without values
-ENV DATABASE_URL=""
-ENV JWT_SECRET=""
-ENV FRONTEND_DEV_URL=""
-ENV FRONTEND_PROD_URL=""
-ENV MAIL_USERNAME=""
-ENV MAIL_PASSWORD=""
-
 # Make port configurable via environment variable
 ENV PORT=8080
+
+# Expose the port
 EXPOSE ${PORT}
 
-# Command to run the application with explicit profile and port settings
-ENTRYPOINT ["sh", "-c", "java -jar -Dspring.profiles.active=prod -Dserver.port=${PORT} app.jar"]
+# Command to run the application
+CMD ["sh", "-c", "java -Dserver.port=$PORT -Dspring.profiles.active=prod $JAVA_OPTS -jar app.jar"]
