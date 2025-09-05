@@ -47,7 +47,7 @@ public class SecurityConfig {
                         .ignoringRequestMatchers("/api/auth/public/**"))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/auth/public/**", "/api/csrf-token").permitAll()
+                        .requestMatchers("/api/auth/public/**", "/api/csrf-token", "/").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint((request, response, authException) -> {
