@@ -13,6 +13,7 @@ import org.springframework.security.authentication.InsufficientAuthenticationExc
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -43,6 +44,7 @@ public class SecurityConfig {
             throws Exception {
         return http
                 .cors(withDefaults())
+                .csrf(csrf -> csrf.disable()) // Temporarily disable CSRF for testing
                 // .csrf(csrf -> csrf
                 //         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 //         .ignoringRequestMatchers("/api/auth/public/**"))
@@ -60,10 +62,9 @@ public class SecurityConfig {
                             response.getWriter().write(new ObjectMapper()
                                     .writeValueAsString(Map.of("error", message)));
                         }))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(authenticationJwtTokenFilter(),
                         UsernamePasswordAuthenticationFilter.class)
-                .formLogin(withDefaults())
-                .httpBasic(withDefaults())
                 .build();
     }
 
