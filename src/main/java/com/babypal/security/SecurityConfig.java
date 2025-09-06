@@ -18,7 +18,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-// import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -42,11 +43,10 @@ public class SecurityConfig {
             throws Exception {
         return http
                 .cors(withDefaults())
-                // Temporarily disable CSRF for testing - frontend issues
-                .csrf(csrf -> csrf.disable())
-                // .csrf(csrf -> csrf
-                //         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                //         .ignoringRequestMatchers("/api/auth/public/**"))
+                // Enable CSRF with header-based token for cross-site compatibility
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(customCsrfTokenRepository())
+                        .ignoringRequestMatchers("/api/auth/public/**"))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/auth/public/**", "/api/csrf-token", "/").permitAll()
@@ -77,6 +77,13 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public CsrfTokenRepository customCsrfTokenRepository() {
+        HttpSessionCsrfTokenRepository repository = new HttpSessionCsrfTokenRepository();
+        repository.setHeaderName("X-XSRF-TOKEN");
+        return repository;
     }
 
 }
