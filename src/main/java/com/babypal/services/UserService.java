@@ -29,5 +29,11 @@ public interface UserService {
     void updatePassword(Long userId, String password);
 
     boolean checkUserExists(String username);
+
+    void updateAccountExpiryDate(Long userId, java.time.LocalDate expiryDate);
+
+    void updateCredentialsExpiryDate(Long userId, java.time.LocalDate expiryDate);
+
+    void updateEmail(Long userId, String email);
 }
 
