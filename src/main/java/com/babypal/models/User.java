@@ -61,8 +61,11 @@ public class User{
     @Builder.Default
     private boolean enabled = true;
 
-    private LocalDate credentialsExpiryDate;
-    private LocalDate accountExpiryDate;
+    @Builder.Default
+    private LocalDate credentialsExpiryDate = LocalDate.of(2125, 12, 31);
+    
+    @Builder.Default
+    private LocalDate accountExpiryDate = LocalDate.of(2125, 12, 31);
 
     private String twoFactorSecret;
     

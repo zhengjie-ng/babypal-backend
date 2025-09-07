@@ -178,4 +178,42 @@ public class UserServiceImpl implements UserService {
         return userRepository.existsByUserName(username);
     }
 
+    @Override
+    public void updateAccountExpiryDate(Long userId, java.time.LocalDate expiryDate) {
+        User user = userRepository.findById(userId).orElseThrow(() -> 
+            new RuntimeException("User not found"));
+        user.setAccountExpiryDate(expiryDate);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void updateCredentialsExpiryDate(Long userId, java.time.LocalDate expiryDate) {
+        User user = userRepository.findById(userId).orElseThrow(() -> 
+            new RuntimeException("User not found"));
+        user.setCredentialsExpiryDate(expiryDate);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void updateEmail(Long userId, String email) {
+        if (email == null || email.trim().isEmpty()) {
+            throw new RuntimeException("Email cannot be empty");
+        }
+        
+        if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            throw new RuntimeException("Invalid email format");
+        }
+        
+        User user = userRepository.findById(userId).orElseThrow(() -> 
+            new RuntimeException("User not found"));
+        
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        if (existingUser.isPresent() && !existingUser.get().getUserId().equals(userId)) {
+            throw new RuntimeException("Email already exists");
+        }
+        
+        user.setEmail(email);
+        userRepository.save(user);
+    }
+
 }

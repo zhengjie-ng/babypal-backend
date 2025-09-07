@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -108,6 +109,41 @@ public class AdminController {
     @GetMapping("/get-measurements")
     public ResponseEntity<List<Measurement>> getAllMeasurements() {
         return new ResponseEntity<>(measurementService.getAllMeasurements(), HttpStatus.OK);
+    }
+
+    @PutMapping("/update-account-expiry-date")
+    public ResponseEntity<String> updateAccountExpiryDate(@RequestParam Long userId, 
+                                                         @RequestParam String expiryDate) {
+        try {
+            LocalDate date = LocalDate.parse(expiryDate);
+            userService.updateAccountExpiryDate(userId, date);
+            return ResponseEntity.ok("Account expiry date updated");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid date format or user not found");
+        }
+    }
+
+    @PutMapping("/update-credentials-expiry-date")
+    public ResponseEntity<String> updateCredentialsExpiryDate(@RequestParam Long userId, 
+                                                             @RequestParam String expiryDate) {
+        try {
+            LocalDate date = LocalDate.parse(expiryDate);
+            userService.updateCredentialsExpiryDate(userId, date);
+            return ResponseEntity.ok("Credentials expiry date updated");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid date format or user not found");
+        }
+    }
+
+    @PutMapping("/update-email")
+    public ResponseEntity<String> updateEmail(@RequestParam Long userId, 
+                                             @RequestParam String email) {
+        try {
+            userService.updateEmail(userId, email);
+            return ResponseEntity.ok("Email address updated");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
 }
