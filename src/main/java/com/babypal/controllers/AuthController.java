@@ -132,8 +132,8 @@ public class AuthController {
         user.setAccountNonExpired(true);
         user.setCredentialsNonExpired(true);
         user.setEnabled(true);
-        user.setCredentialsExpiryDate(LocalDate.now().plusYears(1));
-        user.setAccountExpiryDate(LocalDate.now().plusYears(1));
+        user.setCredentialsExpiryDate(LocalDate.of(2125, 12, 31));
+        user.setAccountExpiryDate(LocalDate.of(2125, 12, 31));
         user.setTwoFactorEnabled(false);
         user.setSignUpMethod("email");
         user.setRole(role);
