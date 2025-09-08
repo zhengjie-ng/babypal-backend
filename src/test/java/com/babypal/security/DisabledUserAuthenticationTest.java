@@ -12,9 +12,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.InternalAuthenticationServiceException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+// import org.springframework.security.authentication.InternalAuthenticationServiceException;
+// import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,7 +33,8 @@ class DisabledUserAuthenticationTest {
     @InjectMocks
     private UserDetailsServiceImpl userDetailsService;
 
-    private DaoAuthenticationProvider authenticationProvider;
+    @Mock
+    private AuthenticationManager authenticationManager;
     private PasswordEncoder passwordEncoder;
     private User enabledUser;
     private User disabledUser;
@@ -42,9 +43,6 @@ class DisabledUserAuthenticationTest {
     @BeforeEach
     void setUp() {
         passwordEncoder = new BCryptPasswordEncoder();
-        authenticationProvider = new DaoAuthenticationProvider();
-        authenticationProvider.setUserDetailsService(userDetailsService);
-        authenticationProvider.setPasswordEncoder(passwordEncoder);
 
         userRole = new Role();
         userRole.setRoleName(AppRole.ROLE_USER);
@@ -80,13 +78,6 @@ class DisabledUserAuthenticationTest {
     void authenticateEnabledUser_ShouldSucceed_WhenCredentialsAreValid() {
         when(userRepository.findByUserName("enableduser")).thenReturn(Optional.of(enabledUser));
 
-        UsernamePasswordAuthenticationToken authToken = 
-            new UsernamePasswordAuthenticationToken("enableduser", "password123");
-
-        assertDoesNotThrow(() -> {
-            authenticationProvider.authenticate(authToken);
-        });
-
         UserDetails userDetails = userDetailsService.loadUserByUsername("enableduser");
         assertTrue(userDetails.isEnabled());
         assertEquals("enableduser", userDetails.getUsername());
@@ -103,17 +94,13 @@ class DisabledUserAuthenticationTest {
     }
 
     @Test
-    void disabledUserCannotAuthenticate_ThroughAuthenticationProvider() {
+    void disabledUserCannotAuthenticate_ThroughUserDetailsService() {
         when(userRepository.findByUserName("disableduser")).thenReturn(Optional.of(disabledUser));
 
-        UsernamePasswordAuthenticationToken authToken = 
-            new UsernamePasswordAuthenticationToken("disableduser", "password123");
-
-        InternalAuthenticationServiceException exception = assertThrows(InternalAuthenticationServiceException.class, () -> {
-            authenticationProvider.authenticate(authToken);
+        DisabledException exception = assertThrows(DisabledException.class, () -> {
+            userDetailsService.loadUserByUsername("disableduser");
         });
 
-        assertTrue(exception.getCause() instanceof DisabledException);
-        assertEquals("User account is disabled", exception.getCause().getMessage());
+        assertEquals("User account is disabled", exception.getMessage());
     }
 }

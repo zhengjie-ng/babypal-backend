@@ -1,34 +1,43 @@
-# Stage 1: Build the application
-FROM maven:3.9-eclipse-temurin-17-alpine as builder
+# BUILD STAGE
+# Use Eclipse Temurin 21 JDK image as the build environment
+FROM eclipse-temurin:21-jdk AS build
+
+# Set the working directory
 WORKDIR /app
 
-# Copy Maven wrapper files
-COPY .mvn/ .mvn/
-COPY mvnw mvnw.cmd ./
-COPY pom.xml ./
+# Copy Maven wrapper, .mvn directory, and pom.xml first
+# This is to maximize layer caching
+COPY mvnw .
+COPY .mvn .mvn
+COPY pom.xml .
 
-# Make maven wrapper executable
-RUN chmod +x mvnw
+# Download dependencies (so they are cached unless pom.xml changes)
+# This is useful if your source code changes but the dependencies do not
+# Docker can reuse the cached dependencies layer
+# Maven will download dependencies into local repo (~/.m2/repository)
+# -B flag is used for batch mode, which disables interactive prompts
+RUN ./mvnw dependency:go-offline -B
 
-# Copy source code
-COPY src ./src/
+# Copy the rest of the application source code
+COPY . .
 
-# Show contents for debugging
-RUN echo "Contents of /app:" && ls -la
-
-# Build the application using Maven wrapper
+# Build the app
 RUN ./mvnw clean package -DskipTests
 
-# Stage 2: Create the runtime image
-FROM eclipse-temurin:17-jre-alpine
+# RUN STAGE
+# Use the smaller JRE image for the final runtime
+FROM eclipse-temurin:21-jre AS run
+
+# Set the working directory
 WORKDIR /app
-COPY --from=builder /app/target/*.jar app.jar
 
-# Make port configurable via environment variable
-ENV PORT=8080
+# Copy jar file from build stage
+COPY --from=build /app/target/*.jar app.jar
 
-# Expose the port
-EXPOSE ${PORT}
+# Expose the application port
+EXPOSE 8080
 
-# Command to run the application
-CMD ["sh", "-c", "java -Dserver.port=$PORT -Dspring.profiles.active=prod $JAVA_OPTS -jar app.jar"]
+# Run the application
+# CMD ["java", "-jar", "app.jar"]
+# Use ENTRYPOINT instead because it allows flexibility in passing arguments
+ENTRYPOINT [ "java", "-jar", "app.jar" ]
