@@ -162,6 +162,7 @@ workflows:
       - publish:
           requires:
             - test
+            - scan
           filters:
               branches:
                 only: develop
@@ -203,6 +204,8 @@ workflows:
       - deploy:
           requires:
             - publish
+            - scan
+            - snyk_sast
           filters:
               branches:
                 only: release
