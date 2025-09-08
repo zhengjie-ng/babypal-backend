@@ -2,11 +2,6 @@
 # Use Eclipse Temurin 21 JDK image as the build environment
 FROM eclipse-temurin:21-jdk AS build
 
-# Update package lists and upgrade packages to fix security vulnerabilities
-RUN apt-get update && apt-get upgrade -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
 # Set the working directory
 WORKDIR /app
 
@@ -30,8 +25,8 @@ COPY . .
 RUN ./mvnw clean package -DskipTests
 
 # RUN STAGE
-# Use distroless Java image for better security (no shell, minimal packages)
-FROM gcr.io/distroless/java21-debian12 AS run
+# Use the smaller JRE image for the final runtime
+FROM eclipse-temurin:21-jre AS run
 
 # Set the working directory
 WORKDIR /app
