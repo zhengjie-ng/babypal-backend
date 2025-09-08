@@ -3,7 +3,7 @@ version: 2.1
 orbs:
   docker: circleci/docker@2.1.4
   heroku: circleci/heroku@2.0.0
-  snyk: snyk/snyk@1.5.0
+  snyk: snyk/snyk@2.3.0
 
 # Commands - reusable sets of steps
 commands:
@@ -23,6 +23,16 @@ commands:
           key: v1-dependencies-{{ checksum "pom.xml" }}
 
 jobs:
+  secrets_scan_local:
+    docker:
+      - image: zricethezav/gitleaks:latest
+    steps:
+      - checkout
+      - run:
+          name: Run gitleaks scan (local files only)
+          # --source . : scan current directory and all subdirectories
+          # --no-git : do not scan git history
+          command: gitleaks detect --source . --no-git
   build:
     docker:
       - image: cimg/openjdk:17.0
@@ -42,6 +52,16 @@ jobs:
             - mvnw.cmd
             - pom.xml
             - src/
+
+  # Snyk Static Application Security Testing (code scan)
+  snyk_sast:
+    docker:
+      - image: cimg/openjdk:17.0
+    steps:
+      - checkout
+      - snyk/scan:
+          command: code test
+
 
   test:
     docker:
@@ -111,11 +131,21 @@ jobs:
 workflows:
   workflow-develop:
     jobs:
+      - secrets_scan_local:
+          filters:
+            branches:
+              only: develop
       - build:
           filters:
             branches:
               only: develop
       - test:
+          requires:
+            - build
+          filters:
+            branches:
+              only: develop
+      - snyk_sast:
           requires:
             - build
           filters:
@@ -136,6 +166,10 @@ workflows:
 
   workflow-release:
     jobs:
+      - secrets_scan_local:
+          filters:
+            branches:
+              only: release
       - build:
           filters:
             branches:
@@ -147,6 +181,12 @@ workflows:
             branches:
               only: release
       - scan:
+          requires:
+            - build
+          filters:
+            branches:
+              only: release
+      - snyk_sast:
           requires:
             - build
           filters:
