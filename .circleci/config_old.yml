@@ -1,0 +1,166 @@
+version: 2.1
+
+orbs:
+  docker: circleci/docker@2.1.4
+  heroku: circleci/heroku@2.0.0
+  snyk: snyk/snyk@1.5.0
+
+# Commands - reusable sets of steps
+commands:
+  maven_install:
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "pom.xml" }}
+            - v1-dependencies-
+      - run:
+          name: Install Dependencies
+          command: mvn dependency:go-offline
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "pom.xml" }}
+
+jobs:
+  build:
+    docker:
+      - image: cimg/openjdk:17.0
+    steps:
+      - maven_install
+      - run:
+          name: Build Package
+          command: mvn clean package -DskipTests
+      - persist_to_workspace:
+          root: .
+          paths:
+            - target/
+            - Dockerfile
+            - .dockerignore
+            - .mvn/
+            - mvnw
+            - mvnw.cmd
+            - pom.xml
+            - src/
+
+  test:
+    docker:
+      - image: cimg/openjdk:17.0
+    steps:
+      - maven_install
+      - run:
+          name: Run Tests
+          command: mvn test
+
+  scan:
+    docker:
+      - image: cimg/openjdk:17.0
+    steps:
+      - checkout
+      - setup_remote_docker
+      - docker/check:
+          docker-username: DOCKER_USER
+          docker-password: DOCKER_PASSWORD
+      - run: docker build -t $DOCKER_IMAGE .
+      - snyk/scan:
+          docker-image-name: $DOCKER_IMAGE
+          fail-on-issues: true
+          severity-threshold: medium
+
+  publish:
+    executor: docker/docker
+    steps:
+      - setup_remote_docker
+      - attach_workspace:
+          at: .
+      - docker/check:
+          docker-username: DOCKER_USER
+          docker-password: DOCKER_PASSWORD
+      - docker/build:
+          image: $DOCKER_IMAGE
+          tag: << pipeline.git.revision >>,latest
+      - docker/push:
+          image: $DOCKER_IMAGE
+          tag: << pipeline.git.revision >>,latest
+  deploy:
+    docker:
+      - image: cimg/node:16.10
+    steps:
+      - setup_remote_docker
+      - heroku/install
+      - checkout
+      - docker/check:
+          docker-username: DOCKER_USER
+          docker-password: DOCKER_PASSWORD
+      - run:
+          name: Deploy to Heroku
+          command: |
+            echo "Deploying pre-built image to Heroku..."
+            heroku container:login
+            # Use Heroku container stack
+            heroku stack:set container --app babypal
+            # Pull image that was built in publish job
+            docker pull $DOCKER_IMAGE:<< pipeline.git.revision >>
+            # Tag it for Heroku
+            docker tag $DOCKER_IMAGE:<< pipeline.git.revision >> registry.heroku.com/babypal/web
+            # Push to Heroku Container Registry
+            docker push registry.heroku.com/babypal/web
+            # Release the pushed Docker image
+            heroku container:release web --app babypal
+
+workflows:
+  workflow-develop:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: develop
+      - test:
+          requires:
+            - build
+          filters:
+            branches:
+              only: develop
+      - scan:
+          requires:
+            - build
+          filters:
+            branches:
+              only: develop
+      - publish:
+          requires:
+            - test
+          filters:
+              branches:
+                only: develop
+
+  workflow-release:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: release
+      - test:
+          requires:
+            - build
+          filters:
+            branches:
+              only: release
+      - scan:
+          requires:
+            - build
+          filters:
+            branches:
+              only: release
+      - publish:
+          requires:
+            - test
+          filters:
+              branches:
+                only: release
+      - deploy:
+          requires:
+            - publish
+          filters:
+              branches:
+                only: release
