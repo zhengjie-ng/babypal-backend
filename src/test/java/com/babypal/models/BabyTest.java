@@ -68,8 +68,12 @@ class BabyTest {
         Set<ConstraintViolation<Baby>> violations = validator.validate(baby);
         assertFalse(violations.isEmpty());
         
-        ConstraintViolation<Baby> violation = violations.iterator().next();
-        assertEquals("Baby name is required", violation.getMessage());
+        // Either @NotBlank or @Size validation can be triggered for blank string
+        // Check that we get one of the expected validation messages
+        String actualMessage = violations.iterator().next().getMessage();
+        assertTrue(actualMessage.equals("Baby name is required") || 
+                  actualMessage.equals("Baby name must be between 3 and 100 characters"),
+                  "Expected either 'Baby name is required' or 'Baby name must be between 3 and 100 characters' but got: " + actualMessage);
     }
 
     @Test
