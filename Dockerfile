@@ -2,6 +2,11 @@
 # Use Eclipse Temurin 21 JDK image as the build environment
 FROM eclipse-temurin:21-jdk AS build
 
+# Update package lists and upgrade packages to fix security vulnerabilities
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 # Set the working directory
 WORKDIR /app
 
@@ -28,11 +33,25 @@ RUN ./mvnw clean package -DskipTests
 # Use the smaller JRE image for the final runtime
 FROM eclipse-temurin:21-jre AS run
 
+# Update package lists and upgrade packages to fix security vulnerabilities
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# # Create non-root user for security
+# RUN groupadd -r appuser && useradd -r -g appuser appuser
+
 # Set the working directory
 WORKDIR /app
 
 # Copy jar file from build stage
 COPY --from=build /app/target/*.jar app.jar
+
+# # Change ownership of the app directory to appuser
+# RUN chown -R appuser:appuser /app
+
+# # Switch to non-root user
+# USER appuser
 
 # Expose the application port
 EXPOSE 8080
