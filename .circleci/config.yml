@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   docker: circleci/docker@2.1.4
-  heroku: circleci/heroku@2.0.0
+  aws-cli: circleci/aws-cli@4.0.0
   snyk: snyk/snyk@2.3.0
 
 # Commands - reusable sets of steps
@@ -106,29 +106,54 @@ jobs:
           tag: << pipeline.git.revision >>,latest
   deploy:
     docker:
-      - image: cimg/node:16.10
+      - image: cimg/openjdk:17.0
     steps:
-      - setup_remote_docker
-      - heroku/install
       - checkout
+      - setup_remote_docker
+      - aws-cli/setup
       - docker/check:
           docker-username: DOCKER_USER
           docker-password: DOCKER_PASSWORD
       - run:
-          name: Deploy to Heroku
+          name: Deploy to AWS Elastic Beanstalk
           command: |
-            echo "Deploying pre-built image to Heroku..."
-            heroku container:login
-            # Use Heroku container stack
-            heroku stack:set container --app babypal
-            # Pull image that was built in publish job
+            echo "Deploying application to AWS Elastic Beanstalk..."
+            # Pull the built Docker image
             docker pull $DOCKER_IMAGE:<< pipeline.git.revision >>
-            # Tag it for Heroku
-            docker tag $DOCKER_IMAGE:<< pipeline.git.revision >> registry.heroku.com/babypal/web
-            # Push to Heroku Container Registry
-            docker push registry.heroku.com/babypal/web
-            # Release the pushed Docker image
-            heroku container:release web --app babypal
+            # Tag the image for ECR
+            docker tag $DOCKER_IMAGE:<< pipeline.git.revision >> $AWS_ECR_REGISTRY:<< pipeline.git.revision >>
+            # Login to ECR
+            aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
+            # Push to ECR
+            docker push $AWS_ECR_REGISTRY:<< pipeline.git.revision >>
+            # Create Dockerrun.aws.json for EB
+            echo '{
+              "AWSEBDockerrunVersion": "1",
+              "Image": {
+                "Name": "'$AWS_ECR_REGISTRY':<< pipeline.git.revision >>",
+                "Update": "true"
+              },
+              "Ports": [
+                {
+                  "ContainerPort": "8080"
+                }
+              ]
+            }' > Dockerrun.aws.json
+            # Create ZIP file with Dockerrun.aws.json
+            zip deployment.zip Dockerrun.aws.json
+            # Upload ZIP file to S3
+            aws s3 cp deployment.zip s3://elasticbeanstalk-ap-southeast-1-$AWS_ACCOUNT_ID/$EB_NAME/<< pipeline.git.revision >>.zip
+            # Create application version
+            aws elasticbeanstalk create-application-version \
+              --application-name $EB_NAME \
+              --version-label << pipeline.git.revision >> \
+              --source-bundle S3Bucket=elasticbeanstalk-ap-southeast-1-$AWS_ACCOUNT_ID,S3Key=$EB_NAME/<< pipeline.git.revision >>.zip \
+              --region $AWS_DEFAULT_REGION
+            # Update EB environment with new version
+            aws elasticbeanstalk update-environment \
+              --environment-name $EB_ENVIRONMENT_NAME \
+              --version-label << pipeline.git.revision >> \
+              --region $AWS_DEFAULT_REGION
 
 workflows:
   workflow-develop:
