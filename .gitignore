@@ -32,3 +32,10 @@ build/
 ### VS Code ###
 .vscode/
 .env
+
+### AWS ###
+aws/
+awscliv2.zip
+
+### Claude Code ###
+.claude/
