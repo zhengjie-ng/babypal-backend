@@ -121,11 +121,11 @@ jobs:
             # Pull the built Docker image
             docker pull $DOCKER_IMAGE:<< pipeline.git.revision >>
             # Tag the image for ECR
-            docker tag $DOCKER_IMAGE:<< pipeline.git.revision >> $AWS_ECR_REGISTRY/babypal-backend:<< pipeline.git.revision >>
+            docker tag $DOCKER_IMAGE:<< pipeline.git.revision >> $AWS_ECR_REGISTRY:<< pipeline.git.revision >>
             # Login to ECR
             aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
             # Push to ECR
-            docker push $AWS_ECR_REGISTRY/babypal-backend:<< pipeline.git.revision >>
+            docker push $AWS_ECR_REGISTRY:<< pipeline.git.revision >>
             # Update EB environment with new image
             aws elasticbeanstalk update-environment --environment-name $EB_ENVIRONMENT_NAME --version-label << pipeline.git.revision >>
 
