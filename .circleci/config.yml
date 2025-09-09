@@ -142,12 +142,12 @@ jobs:
             # Create ZIP file with Dockerrun.aws.json
             zip deployment.zip Dockerrun.aws.json
             # Upload ZIP file to S3
-            aws s3 cp deployment.zip s3://elasticbeanstalk-ap-southeast-1-$AWS_ACCOUNT_ID/babypal-backend/<< pipeline.git.revision >>.zip
+            aws s3 cp deployment.zip s3://elasticbeanstalk-ap-southeast-1-$AWS_ACCOUNT_ID/$EB_NAME/<< pipeline.git.revision >>.zip
             # Create application version
             aws elasticbeanstalk create-application-version \
-              --application-name babypal-backend \
+              --application-name $EB_NAME \
               --version-label << pipeline.git.revision >> \
-              --source-bundle S3Bucket=elasticbeanstalk-ap-southeast-1-$AWS_ACCOUNT_ID,S3Key=babypal-backend/<< pipeline.git.revision >>.zip \
+              --source-bundle S3Bucket=elasticbeanstalk-ap-southeast-1-$AWS_ACCOUNT_ID,S3Key=$EB_NAME/<< pipeline.git.revision >>.zip \
               --region $AWS_DEFAULT_REGION
             # Update EB environment with new version
             aws elasticbeanstalk update-environment \
