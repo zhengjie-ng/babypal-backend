@@ -139,8 +139,8 @@ jobs:
                 }
               ]
             }' > Dockerrun.aws.json
-            # Create ZIP file with Dockerrun.aws.json and .ebextensions
-            zip -r deployment.zip Dockerrun.aws.json .ebextensions/
+            # Create ZIP file with Dockerrun.aws.json
+            zip deployment.zip Dockerrun.aws.json
             # Upload ZIP file to S3
             aws s3 cp deployment.zip s3://elasticbeanstalk-ap-southeast-1-$AWS_ACCOUNT_ID/$EB_NAME/<< pipeline.git.revision >>.zip
             # Create application version
