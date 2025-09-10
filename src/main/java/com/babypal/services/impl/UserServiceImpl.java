@@ -40,8 +40,8 @@ public class UserServiceImpl implements UserService {
     @Autowired
     EmailService emailService;
 
-    @Value("${frontend.url}")
-    private String frontendUrl;
+    @Value("${frontend.urls}")
+    private String[] frontendUrls;
 
     @Override
     public void updateUserRole(Long userId, String roleName) {
@@ -100,7 +100,7 @@ public class UserServiceImpl implements UserService {
                 PasswordResetToken resetToken = new PasswordResetToken(token, expiryDate, user);
                 passwordResetTokenRepository.save(resetToken);
 
-                String resetUrl = frontendUrl + "/reset-password?token=" + token;
+                String resetUrl = frontendUrls[0] + "/reset-password?token=" + token;
                 // Send email to user
                 emailService.sendPasswordResetEmail(user.getEmail(), resetUrl);
         

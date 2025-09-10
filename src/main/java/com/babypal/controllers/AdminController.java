@@ -2,12 +2,15 @@ package com.babypal.controllers;
 
 import com.babypal.dtos.UserDTO;
 import com.babypal.models.Baby;
+import com.babypal.models.GrowthGuide;
 import com.babypal.models.Measurement;
 import com.babypal.models.Record;
 import com.babypal.models.Role;
 import com.babypal.models.User;
+import com.babypal.repositories.GrowthGuideRepository;
 import com.babypal.repositories.RoleRepository;
 import com.babypal.services.BabyService;
+import com.babypal.services.GrowthGuideService;
 import com.babypal.services.MeasurementService;
 import com.babypal.services.RecordService;
 import com.babypal.services.UserService;
@@ -38,7 +41,13 @@ public class AdminController {
     private MeasurementService measurementService;
 
     @Autowired
+    private GrowthGuideService growthGuideService;
+
+    @Autowired
     private RoleRepository roleRepository;
+
+    // @Autowired
+    // private GrowthGuideRepository growthGuideRepository;
 
     @GetMapping("/get-users")
     public ResponseEntity<List<User>> getAllUsers() {
@@ -109,6 +118,11 @@ public class AdminController {
     @GetMapping("/get-measurements")
     public ResponseEntity<List<Measurement>> getAllMeasurements() {
         return new ResponseEntity<>(measurementService.getAllMeasurements(), HttpStatus.OK);
+    }
+
+    @PutMapping("/{growthGuideId}")
+    public GrowthGuide updateGrowthGuide(@PathVariable Long growthGuideId, @RequestBody GrowthGuide growthGuideDetails) {
+        return growthGuideService.updateGrowthGuide(growthGuideId, growthGuideDetails);
     }
 
     @PutMapping("/update-account-expiry-date")

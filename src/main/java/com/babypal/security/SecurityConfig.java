@@ -19,7 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-// import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -44,7 +44,8 @@ public class SecurityConfig {
             throws Exception {
         return http
                 .cors(withDefaults())
-                .csrf(csrf -> csrf.disable()) // Temporarily disable CSRF for testing
+                // Temporarily disable CSRF protection
+                .csrf(csrf -> csrf.disable())
                 // .csrf(csrf -> csrf
                 //         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 //         .ignoringRequestMatchers("/api/auth/public/**"))
