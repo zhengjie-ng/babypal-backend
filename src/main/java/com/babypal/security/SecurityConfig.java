@@ -44,9 +44,11 @@ public class SecurityConfig {
             throws Exception {
         return http
                 .cors(withDefaults())
-                .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers("/api/auth/public/**"))
+                // Temporarily disable CSRF protection
+                .csrf(csrf -> csrf.disable())
+                // .csrf(csrf -> csrf
+                //         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                //         .ignoringRequestMatchers("/api/auth/public/**"))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/auth/public/**", "/api/csrf-token", "/").permitAll()
