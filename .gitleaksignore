@@ -2,4 +2,4 @@
 0290b51:src/test/resources/application-test.properties:spring.app.jwtSecret=testSecretKey123456789012345678901234567890
 
 # Ignore test database password - this is a standard H2 test configuration, not a real secret
-src/test/resources/application-test.properties:spring.datasource.password=password
+88feab8:src/test/resources/application-test.properties:spring.datasource.password=password
