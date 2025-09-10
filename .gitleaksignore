@@ -1,2 +1,12 @@
 # Ignore test JWT secret in test configuration - this was a test-only secret, not production
 0290b51:src/test/resources/application-test.properties:spring.app.jwtSecret=testSecretKey123456789012345678901234567890
+
+# Ignore the JWT secret reference in this very .gitleaksignore file (self-reference)
+.gitleaksignore:generic-api-key:2
+
+# Ignore local development .env file secrets - these are not committed to git
+.env:generic-api-key:3
+.env:generic-api-key:5
+
+# Ignore example GitLeaks output in documentation
+README.md:sidekiq-secret:42
