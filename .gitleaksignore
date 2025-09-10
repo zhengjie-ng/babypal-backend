@@ -1,5 +1,2 @@
 # Ignore test JWT secret in test configuration - this was a test-only secret, not production
 0290b51:src/test/resources/application-test.properties:spring.app.jwtSecret=testSecretKey123456789012345678901234567890
-
-# Ignore test database password - this is a standard H2 test configuration, not a real secret
-88feab8:src/test/resources/application-test.properties:spring.datasource.password=password
