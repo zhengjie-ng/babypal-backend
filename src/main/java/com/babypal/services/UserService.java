@@ -2,6 +2,7 @@ package com.babypal.services;
 
 import com.babypal.dtos.UserDTO;
 import com.babypal.models.User;
+import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
 
 import java.util.List;
 
@@ -35,5 +36,13 @@ public interface UserService {
     void updateCredentialsExpiryDate(Long userId, java.time.LocalDate expiryDate);
 
     void updateEmail(Long userId, String email);
+
+    GoogleAuthenticatorKey generate2FASecret(Long userId);
+
+    boolean validate2FACode(Long userId, int code);
+
+    void enable2FA(Long userId);
+
+    void disable2FA(Long userId);
 }
 

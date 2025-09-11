@@ -36,8 +36,12 @@ import com.babypal.security.request.SignupRequest;
 import com.babypal.security.response.LoginResponse;
 import com.babypal.security.response.MessageResponse;
 import com.babypal.security.response.UserInfoResponse;
+import com.babypal.security.services.UserDetailsImpl;
 import com.babypal.services.LogService;
+import com.babypal.services.TotpService;
 import com.babypal.services.UserService;
+import com.babypal.util.AuthUtil;
+import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
 
 import jakarta.validation.Valid;
 
@@ -66,6 +70,12 @@ public class AuthController {
     @Autowired
     LogService logService;
 
+    @Autowired
+    AuthUtil authUtil;
+
+    @Autowired
+    TotpService totpService;
+
     @PostMapping("/public/signin")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
         Authentication authentication;
@@ -87,7 +97,7 @@ public class AuthController {
         // set the authentication
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
         String jwtToken = jwtUtils.generateTokenFromUsername(userDetails);
 
@@ -98,7 +108,7 @@ public class AuthController {
 
         // Get user entity for logging
         User user = userService.findByUsername(userDetails.getUsername());
-        
+
         // Log successful sign in
         logService.logSignInSuccess(userDetails.getUsername(), user.getUserId());
 
@@ -190,9 +200,10 @@ public class AuthController {
 
     @PostMapping("/public/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestParam String email) {
-        try{
+        try {
             userService.generatePasswordResetToken(email);
-            return ResponseEntity.ok(new MessageResponse("Password reset token generated and email sent if the email exists in our system."));
+            return ResponseEntity.ok(new MessageResponse(
+                    "Password reset token generated and email sent if the email exists in our system."));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
         }
@@ -214,10 +225,65 @@ public class AuthController {
             User user = userService.findByUsername(userDetails.getUsername());
             logService.logSignOut(userDetails.getUsername(), user.getUserId());
         }
-        
+
         SecurityContextHolder.clearContext();
-        
+
         return ResponseEntity.ok(new MessageResponse("You've been signed out successfully"));
+    }
+
+    // 2FA Authentication
+    @PostMapping("/enable-2fa")
+    public ResponseEntity<String> enable2FA() {
+        Long userId = authUtil.loggedInUserId();
+        GoogleAuthenticatorKey secret = userService.generate2FASecret(userId);
+        String qrCodeUrl = totpService.getQrCodeUrl(secret,
+                userService.getUserById(userId).getUserName());
+        return ResponseEntity.ok(qrCodeUrl);
+    }
+
+    @PostMapping("/disable-2fa")
+    public ResponseEntity<String> disable2FA() {
+        Long userId = authUtil.loggedInUserId();
+        userService.disable2FA(userId);
+        return ResponseEntity.ok("2FA disabled");
+    }
+
+    @PostMapping("/verify-2fa")
+    public ResponseEntity<String> verify2FA(@RequestParam int code) {
+        Long userId = authUtil.loggedInUserId();
+        boolean isValid = userService.validate2FACode(userId, code);
+        if (isValid) {
+            userService.enable2FA(userId);
+            return ResponseEntity.ok("2FA Verified");
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Invalid 2FA Code");
+        }
+    }
+
+    @GetMapping("/user/2fa-status")
+    public ResponseEntity<?> get2FAStatus() {
+        User user = authUtil.loggedInUser();
+        if (user != null) {
+            return ResponseEntity.ok().body(Map.of("is2faEnabled", user.isTwoFactorEnabled()));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("User not found");
+        }
+    }
+
+    @PostMapping("/public/verify-2fa-login")
+    public ResponseEntity<String> verify2FALogin(@RequestParam int code,
+            @RequestParam String jwtToken) {
+        String username = jwtUtils.getUserNameFromJwtToken(jwtToken);
+        User user = userService.findByUsername(username);
+        boolean isValid = userService.validate2FACode(user.getUserId(), code);
+        if (isValid) {
+            return ResponseEntity.ok("2FA Verified");
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Invalid 2FA Code");
+        }
     }
 
 }

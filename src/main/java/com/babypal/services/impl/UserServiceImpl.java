@@ -8,8 +8,10 @@ import com.babypal.models.User;
 import com.babypal.repositories.PasswordResetTokenRepository;
 import com.babypal.repositories.RoleRepository;
 import com.babypal.repositories.UserRepository;
+import com.babypal.services.TotpService;
 import com.babypal.services.UserService;
 import com.babypal.util.EmailService;
+import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +41,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     EmailService emailService;
+
+    @Autowired
+    TotpService totpService;
 
     @Value("${frontend.urls}")
     private String[] frontendUrls;
@@ -215,5 +220,39 @@ public class UserServiceImpl implements UserService {
         user.setEmail(email);
         userRepository.save(user);
     }
+
+    @Override
+    public GoogleAuthenticatorKey generate2FASecret(Long userId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        GoogleAuthenticatorKey key = totpService.generateSecret();
+        user.setTwoFactorSecret(key.getKey());
+        userRepository.save(user);
+        return key;
+    }
+
+    @Override
+    public boolean validate2FACode(Long userId, int code){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return totpService.verifyCode(user.getTwoFactorSecret(), code);
+    }
+
+    @Override
+    public void enable2FA(Long userId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setTwoFactorEnabled(true);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void disable2FA(Long userId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setTwoFactorEnabled(false);
+        userRepository.save(user);
+    }
+
 
 }
