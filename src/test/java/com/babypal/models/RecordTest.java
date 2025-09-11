@@ -10,6 +10,8 @@ import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -143,9 +145,9 @@ class RecordTest {
         newRecord.setType("test");
         newRecord.setBaby(baby);
         
-        LocalDateTime beforeCreate = LocalDateTime.now().minusSeconds(1);
+        LocalDateTime beforeCreate = ZonedDateTime.now(ZoneId.of("Asia/Singapore")).toLocalDateTime().minusSeconds(1);
         newRecord.onCreate();
-        LocalDateTime afterCreate = LocalDateTime.now().plusSeconds(1);
+        LocalDateTime afterCreate = ZonedDateTime.now(ZoneId.of("Asia/Singapore")).toLocalDateTime().plusSeconds(1);
         
         assertNotNull(newRecord.getCreatedAt());
         assertNotNull(newRecord.getUpdatedAt());
@@ -162,9 +164,9 @@ class RecordTest {
         newRecord.setBaby(baby);
         newRecord.setStartTime(null);
         
-        LocalDateTime beforeCreate = LocalDateTime.now().minusSeconds(1);
+        LocalDateTime beforeCreate = ZonedDateTime.now(ZoneId.of("Asia/Singapore")).toLocalDateTime().minusSeconds(1);
         newRecord.onCreate();
-        LocalDateTime afterCreate = LocalDateTime.now().plusSeconds(1);
+        LocalDateTime afterCreate = ZonedDateTime.now(ZoneId.of("Asia/Singapore")).toLocalDateTime().plusSeconds(1);
         
         assertNotNull(newRecord.getStartTime());
         assertTrue(newRecord.getStartTime().isAfter(beforeCreate));

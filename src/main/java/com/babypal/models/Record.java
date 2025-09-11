@@ -1,6 +1,8 @@
 package com.babypal.models;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
@@ -65,7 +67,7 @@ public class Record {
 
     @PrePersist
     protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Singapore")).toLocalDateTime();
         createdAt = now;
         updatedAt = now;
         if (startTime == null) {
@@ -75,7 +77,7 @@ public class Record {
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = ZonedDateTime.now(ZoneId.of("Asia/Singapore")).toLocalDateTime();
     }
 
     @JsonBackReference
