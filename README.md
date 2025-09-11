@@ -356,7 +356,7 @@ curl -X POST http://localhost:8080/api/auth/public/signin \
 
 # 3. Access Protected Endpoint
 curl -X GET http://localhost:8080/api/auth/user \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+  -H "Authorization: Bearer <your-jwt-token-here>"
 ```
 
 ## Performance & Monitoring
