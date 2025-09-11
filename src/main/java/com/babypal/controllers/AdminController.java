@@ -3,14 +3,16 @@ package com.babypal.controllers;
 import com.babypal.dtos.UserDTO;
 import com.babypal.models.Baby;
 import com.babypal.models.GrowthGuide;
+import com.babypal.models.Log;
 import com.babypal.models.Measurement;
 import com.babypal.models.Record;
 import com.babypal.models.Role;
 import com.babypal.models.User;
-import com.babypal.repositories.GrowthGuideRepository;
+// import com.babypal.repositories.GrowthGuideRepository;
 import com.babypal.repositories.RoleRepository;
 import com.babypal.services.BabyService;
 import com.babypal.services.GrowthGuideService;
+import com.babypal.services.LogService;
 import com.babypal.services.MeasurementService;
 import com.babypal.services.RecordService;
 import com.babypal.services.UserService;
@@ -18,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -46,6 +50,9 @@ public class AdminController {
     @Autowired
     private RoleRepository roleRepository;
 
+    @Autowired
+    private LogService logService;
+
     // @Autowired
     // private GrowthGuideRepository growthGuideRepository;
 
@@ -56,8 +63,15 @@ public class AdminController {
 
     @PutMapping("/update-role")
     public ResponseEntity<String> updateUserRole(@RequestParam Long userId, 
-                                                 @RequestParam String roleName) {
+                                                 @RequestParam String roleName,
+                                                 @AuthenticationPrincipal UserDetails adminDetails) {
         userService.updateUserRole(userId, roleName);
+        
+        // Log admin action
+        User admin = userService.findByUsername(adminDetails.getUsername());
+        logService.logAdminAction(adminDetails.getUsername(), admin.getUserId(), 
+                                "UPDATE_USER_ROLE", "USER", userId);
+        
         return ResponseEntity.ok("User role updated");
     }
 
@@ -67,8 +81,15 @@ public class AdminController {
     }
 
     @PutMapping("/update-lock-status")
-    public ResponseEntity<String> updateAccountLockStatus(@RequestParam Long userId, @RequestParam boolean lock) {
+    public ResponseEntity<String> updateAccountLockStatus(@RequestParam Long userId, @RequestParam boolean lock,
+                                                         @AuthenticationPrincipal UserDetails adminDetails) {
         userService.updateAccountLockStatus(userId, lock);
+        
+        // Log admin action
+        User admin = userService.findByUsername(adminDetails.getUsername());
+        logService.logAdminAction(adminDetails.getUsername(), admin.getUserId(), 
+                                "UPDATE_LOCK_STATUS", "USER", userId);
+        
         return ResponseEntity.ok("Account lock status updated");
     }
 
@@ -84,8 +105,15 @@ public class AdminController {
     }
 
     @PutMapping("/update-enabled-status")
-    public ResponseEntity<String> updateAccountEnabledStatus(@RequestParam Long userId, @RequestParam boolean enabled) {
+    public ResponseEntity<String> updateAccountEnabledStatus(@RequestParam Long userId, @RequestParam boolean enabled,
+                                                             @AuthenticationPrincipal UserDetails adminDetails) {
         userService.updateAccountEnabledStatus(userId, enabled);
+        
+        // Log admin action
+        User admin = userService.findByUsername(adminDetails.getUsername());
+        logService.logAdminAction(adminDetails.getUsername(), admin.getUserId(), 
+                                "UPDATE_ENABLED_STATUS", "USER", userId);
+        
         return ResponseEntity.ok("Account enabled status updated");
     }
 
@@ -157,6 +185,21 @@ public class AdminController {
             return ResponseEntity.ok("Email address updated");
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/logs")
+    public ResponseEntity<List<Log>> getAllLogs() {
+        return new ResponseEntity<>(logService.getAllLogs(), HttpStatus.OK);
+    }
+
+    @GetMapping("/logs/{logId}")
+    public ResponseEntity<Log> getLogById(@PathVariable Long logId) {
+        try {
+            Log log = logService.getLogById(logId, "admin");
+            return new ResponseEntity<>(log, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
 

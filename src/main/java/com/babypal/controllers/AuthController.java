@@ -36,6 +36,7 @@ import com.babypal.security.request.SignupRequest;
 import com.babypal.security.response.LoginResponse;
 import com.babypal.security.response.MessageResponse;
 import com.babypal.security.response.UserInfoResponse;
+import com.babypal.services.LogService;
 import com.babypal.services.UserService;
 
 import jakarta.validation.Valid;
@@ -62,6 +63,9 @@ public class AuthController {
     @Autowired
     UserService userService;
 
+    @Autowired
+    LogService logService;
+
     @PostMapping("/public/signin")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
         Authentication authentication;
@@ -70,6 +74,10 @@ public class AuthController {
                     .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(),
                             loginRequest.getPassword()));
         } catch (AuthenticationException exception) {
+            // Try to get user ID for failed login, but it might not exist
+            User user = userRepository.findByUserName(loginRequest.getUsername()).orElse(null);
+            Long userId = user != null ? user.getUserId() : null;
+            logService.logSignInFailure(loginRequest.getUsername(), userId);
             Map<String, Object> map = new HashMap<>();
             map.put("message", "Bad credentials");
             map.put("status", false);
@@ -87,6 +95,12 @@ public class AuthController {
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(item -> item.getAuthority())
                 .collect(Collectors.toList());
+
+        // Get user entity for logging
+        User user = userService.findByUsername(userDetails.getUsername());
+        
+        // Log successful sign in
+        logService.logSignInSuccess(userDetails.getUsername(), user.getUserId());
 
         // Prepare the response body, now including the JWT token directly in the body
         LoginResponse response = new LoginResponse(userDetails.getUsername(), roles, jwtToken);
@@ -137,7 +151,10 @@ public class AuthController {
         user.setTwoFactorEnabled(false);
         user.setSignUpMethod("email");
         user.setRole(role);
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // Log successful sign up
+        logService.logSignUp(savedUser.getUserName(), savedUser.getUserId());
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
@@ -189,6 +206,18 @@ public class AuthController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: " + e.getMessage()));
         }
+    }
+
+    @PostMapping("/signout")
+    public ResponseEntity<?> logoutUser(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails != null) {
+            User user = userService.findByUsername(userDetails.getUsername());
+            logService.logSignOut(userDetails.getUsername(), user.getUserId());
+        }
+        
+        SecurityContextHolder.clearContext();
+        
+        return ResponseEntity.ok(new MessageResponse("You've been signed out successfully"));
     }
 
 }
