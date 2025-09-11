@@ -10,19 +10,25 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import com.babypal.exceptions.UnauthorizedAccessException;
 import com.babypal.models.Baby;
 import com.babypal.models.Record;
+import com.babypal.models.User;
 import com.babypal.repositories.RecordRepository;
 import com.babypal.repositories.BabyRepository;
+import com.babypal.services.LogService;
 import com.babypal.services.RecordService;
+import com.babypal.services.UserService;
 
 @Service
 public class RecordServiceImpl implements RecordService {
     private final RecordRepository recordRepository;
-    private final BabyRepository babyRepository; // Add this field
+    private final BabyRepository babyRepository;
+    private final LogService logService;
+    private final UserService userService;
 
-    // Update constructor to include BabyRepository
-    public RecordServiceImpl(RecordRepository recordRepository, BabyRepository babyRepository) {
+    public RecordServiceImpl(RecordRepository recordRepository, BabyRepository babyRepository, LogService logService, UserService userService) {
         this.recordRepository = recordRepository;
         this.babyRepository = babyRepository;
+        this.logService = logService;
+        this.userService = userService;
     }
 
     private boolean isAdmin() {
@@ -41,7 +47,13 @@ public class RecordServiceImpl implements RecordService {
 
         record.setBaby(baby);  // Set the fully loaded baby object
         record.setAuthor(username);
-        return recordRepository.save(record);
+        Record savedRecord = recordRepository.save(record);
+        
+        // Log record creation
+        User user = userService.findByUsername(username);
+        logService.logEntityCreate(username, user.getUserId(), "RECORD", savedRecord.getId(), "CREATE_RECORD");
+        
+        return savedRecord;
     }
 
     @Override
@@ -59,7 +71,13 @@ public class RecordServiceImpl implements RecordService {
         existingRecord.setStartTime(recordDetails.getStartTime());
         existingRecord.setEndTime(recordDetails.getEndTime());
 
-        return recordRepository.save(existingRecord);
+        Record updatedRecord = recordRepository.save(existingRecord);
+        
+        // Log record update
+        User user = userService.findByUsername(username);
+        logService.logEntityUpdate(username, user.getUserId(), "RECORD", recordId, "UPDATE_RECORD");
+        
+        return updatedRecord;
     }
 
     @Override
@@ -72,12 +90,20 @@ public class RecordServiceImpl implements RecordService {
         }
 
         recordRepository.delete(existingRecord);
+        
+        // Log record deletion
+        User user = userService.findByUsername(username);
+        logService.logEntityDelete(username, user.getUserId(), "RECORD", recordId, "DELETE_RECORD");
     }
 
     @Override
     public Record getRecordById(Long record, String username) {
         Record existingRecord = recordRepository.findById(record)
                 .orElseThrow(() -> new RuntimeException("Record not found with id: " + record));
+
+        // Log record read
+        User user = userService.findByUsername(username);
+        logService.logEntityRead(username, user.getUserId(), "RECORD", record, "GET_RECORD");
 
         return existingRecord;
     }
