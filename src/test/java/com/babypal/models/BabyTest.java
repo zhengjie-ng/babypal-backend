@@ -10,6 +10,8 @@ import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -155,9 +157,9 @@ class BabyTest {
         Baby newBaby = new Baby();
         newBaby.setName("Test Baby");
         
-        LocalDateTime beforeCreate = LocalDateTime.now().minusSeconds(1);
+        LocalDateTime beforeCreate = ZonedDateTime.now(ZoneId.of("Asia/Singapore")).toLocalDateTime().minusSeconds(1);
         newBaby.onCreate();
-        LocalDateTime afterCreate = LocalDateTime.now().plusSeconds(1);
+        LocalDateTime afterCreate = ZonedDateTime.now(ZoneId.of("Asia/Singapore")).toLocalDateTime().plusSeconds(1);
         
         assertNotNull(newBaby.getCreatedAt());
         assertNotNull(newBaby.getUpdatedAt());
@@ -173,9 +175,9 @@ class BabyTest {
         newBaby.setName("Test Baby");
         newBaby.setDateOfBirth(null);
         
-        LocalDateTime beforeCreate = LocalDateTime.now().minusSeconds(1);
+        LocalDateTime beforeCreate = ZonedDateTime.now(ZoneId.of("Asia/Singapore")).toLocalDateTime().minusSeconds(1);
         newBaby.onCreate();
-        LocalDateTime afterCreate = LocalDateTime.now().plusSeconds(1);
+        LocalDateTime afterCreate = ZonedDateTime.now(ZoneId.of("Asia/Singapore")).toLocalDateTime().plusSeconds(1);
         
         assertNotNull(newBaby.getDateOfBirth());
         assertTrue(newBaby.getDateOfBirth().isAfter(beforeCreate));

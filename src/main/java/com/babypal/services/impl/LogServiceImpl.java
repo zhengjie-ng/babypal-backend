@@ -145,4 +145,52 @@ public class LogServiceImpl implements LogService {
                 .build();
         return logRepository.save(log);
     }
+    
+    @Override
+    public Log logCredentialsUpdate(String username, Long userId) {
+        Log log = Log.builder()
+                .username(username)
+                .type("AUTH")
+                .typeId(userId)
+                .action("CREDENTIALS_UPDATE")
+                .statusCode("200")
+                .build();
+        return logRepository.save(log);
+    }
+    
+    @Override
+    public Log logTwoFactorEnable(String username, Long userId) {
+        Log log = Log.builder()
+                .username(username)
+                .type("AUTH")
+                .typeId(userId)
+                .action("TWO_FACTOR_ENABLE")
+                .statusCode("200")
+                .build();
+        return logRepository.save(log);
+    }
+    
+    @Override
+    public Log logTwoFactorDisable(String username, Long userId) {
+        Log log = Log.builder()
+                .username(username)
+                .type("AUTH")
+                .typeId(userId)
+                .action("TWO_FACTOR_DISABLE")
+                .statusCode("200")
+                .build();
+        return logRepository.save(log);
+    }
+    
+    @Override
+    public Log logTwoFactorVerification(String username, Long userId, boolean success) {
+        Log log = Log.builder()
+                .username(username)
+                .type("AUTH")
+                .typeId(userId)
+                .action(success ? "TWO_FACTOR_VERIFY_SUCCESS" : "TWO_FACTOR_VERIFY_FAILED")
+                .statusCode(success ? "200" : "401")
+                .build();
+        return logRepository.save(log);
+    }
 }
