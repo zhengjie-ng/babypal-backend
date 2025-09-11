@@ -1,6 +1,8 @@
 package com.babypal.controllers;
 
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -238,22 +240,36 @@ public class AuthController {
         GoogleAuthenticatorKey secret = userService.generate2FASecret(userId);
         String qrCodeUrl = totpService.getQrCodeUrl(secret,
                 userService.getUserById(userId).getUserName());
+        
+        // Note: Actual enabling happens in verify-2fa endpoint
         return ResponseEntity.ok(qrCodeUrl);
     }
 
     @PostMapping("/disable-2fa")
     public ResponseEntity<String> disable2FA() {
         Long userId = authUtil.loggedInUserId();
+        User user = authUtil.loggedInUser();
         userService.disable2FA(userId);
+        
+        // Log 2FA disable
+        logService.logTwoFactorDisable(user.getUserName(), userId);
+        
         return ResponseEntity.ok("2FA disabled");
     }
 
     @PostMapping("/verify-2fa")
     public ResponseEntity<String> verify2FA(@RequestParam int code) {
         Long userId = authUtil.loggedInUserId();
+        User user = authUtil.loggedInUser();
         boolean isValid = userService.validate2FACode(userId, code);
+        
+        // Log 2FA verification attempt
+        logService.logTwoFactorVerification(user.getUserName(), userId, isValid);
+        
         if (isValid) {
             userService.enable2FA(userId);
+            // Log 2FA enable after successful verification
+            logService.logTwoFactorEnable(user.getUserName(), userId);
             return ResponseEntity.ok("2FA Verified");
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -278,11 +294,64 @@ public class AuthController {
         String username = jwtUtils.getUserNameFromJwtToken(jwtToken);
         User user = userService.findByUsername(username);
         boolean isValid = userService.validate2FACode(user.getUserId(), code);
+        
+        // Log 2FA login verification attempt
+        logService.logTwoFactorVerification(username, user.getUserId(), isValid);
+        
         if (isValid) {
             return ResponseEntity.ok("2FA Verified");
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Invalid 2FA Code");
+        }
+    }
+
+    @PostMapping("/update-credentials")
+    public ResponseEntity<?> updateCredentials(
+            @RequestParam String token,
+            @RequestParam String newEmail,
+            @RequestParam String newPassword) {
+        try {
+            String username = jwtUtils.getUserNameFromJwtToken(token);
+            if (username == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new MessageResponse("Invalid token"));
+            }
+
+            User user = userService.findByUsername(username);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new MessageResponse("User not found"));
+            }
+
+            // Check if email is already taken by another user
+            if (userRepository.existsByEmail(newEmail)) {
+                User existingUser = userRepository.findByEmail(newEmail).orElse(null);
+                if (existingUser != null && !existingUser.getUserId().equals(user.getUserId())) {
+                    return ResponseEntity.badRequest()
+                            .body(new MessageResponse("Email is already in use by another user"));
+                }
+            }
+
+            // Update email
+            userService.updateEmail(user.getUserId(), newEmail);
+
+            // Update password (encode it first)
+            String encodedPassword = encoder.encode(newPassword);
+            userService.updatePassword(user.getUserId(), encodedPassword);
+
+            // Update credentials expiry date to current date + 1 year
+            LocalDate newExpiryDate = ZonedDateTime.now(ZoneId.of("Asia/Singapore")).toLocalDate().plusYears(1);
+            userService.updateCredentialsExpiryDate(user.getUserId(), newExpiryDate);
+
+            // Log credential update
+            logService.logCredentialsUpdate(username, user.getUserId());
+
+            return ResponseEntity.ok(new MessageResponse("Credentials updated successfully"));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Failed to update credentials: " + e.getMessage()));
         }
     }
 
