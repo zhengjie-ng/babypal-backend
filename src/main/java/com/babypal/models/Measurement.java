@@ -1,6 +1,8 @@
 package com.babypal.models;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
@@ -60,7 +62,7 @@ public class Measurement {
 
     @PrePersist
     protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Singapore")).toLocalDateTime();
         createdAt = now;
         updatedAt = now;
         if (time == null) {
@@ -70,7 +72,7 @@ public class Measurement {
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = ZonedDateTime.now(ZoneId.of("Asia/Singapore")).toLocalDateTime();
     }
 
     @JsonBackReference

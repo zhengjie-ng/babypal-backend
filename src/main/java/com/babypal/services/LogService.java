@@ -30,4 +30,14 @@ public interface LogService {
     
     // Admin action logging
     Log logAdminAction(String adminUsername, Long adminUserId, String action, String targetType, Long targetId);
+    
+    // Credential update logging
+    Log logCredentialsUpdate(String username, Long userId);
+    
+    // 2FA activity logging
+    Log logTwoFactorEnable(String username, Long userId);
+    
+    Log logTwoFactorDisable(String username, Long userId);
+    
+    Log logTwoFactorVerification(String username, Long userId, boolean success);
 }

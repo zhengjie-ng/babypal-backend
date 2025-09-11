@@ -1,6 +1,8 @@
 package com.babypal.models;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -51,7 +53,7 @@ public class Log {
 
     @PrePersist
     protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Singapore")).toLocalDateTime();
         createdAt = now;
     }
 }

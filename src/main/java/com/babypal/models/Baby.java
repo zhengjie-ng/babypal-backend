@@ -1,6 +1,8 @@
 package com.babypal.models;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
@@ -74,7 +76,7 @@ public class Baby {
 
     @PrePersist
     protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Singapore")).toLocalDateTime();
         createdAt = now;
         updatedAt = now;
         if (dateOfBirth == null) {
@@ -84,7 +86,7 @@ public class Baby {
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = ZonedDateTime.now(ZoneId.of("Asia/Singapore")).toLocalDateTime();
     }
 
     @OneToMany(mappedBy = "baby", cascade = CascadeType.ALL)
