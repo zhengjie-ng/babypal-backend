@@ -3,7 +3,9 @@ package com.babypal.security;
 import com.babypal.security.jwt.AuthEntryPointJwt;
 import com.babypal.security.jwt.AuthTokenFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.babypal.config.OAuth2LoginSuccessHandler;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,8 +21,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-
+// import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -30,14 +31,18 @@ import java.util.Map;
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)
 public class SecurityConfig {
-    @SuppressWarnings("unused")
-    @Autowired
-    private AuthEntryPointJwt unauthorizedHandler;
+        @SuppressWarnings("unused")
+        @Autowired
+        private AuthEntryPointJwt unauthorizedHandler;
 
-    @Bean
-    public AuthTokenFilter authenticationJwtTokenFilter() {
-        return new AuthTokenFilter();
-    }
+        @Autowired
+        @Lazy
+        OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+
+        @Bean
+        public AuthTokenFilter authenticationJwtTokenFilter() {
+                return new AuthTokenFilter();
+        }
 
     @Bean
     public SecurityFilterChain customSecurityFilterChain(HttpSecurity http)
@@ -49,10 +54,18 @@ public class SecurityConfig {
                 // .csrf(csrf -> csrf
                 //         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 //         .ignoringRequestMatchers("/api/auth/public/**"))
-                .authorizeHttpRequests(requests -> requests
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/auth/public/**", "/api/csrf-token", "/").permitAll()
-                        .anyRequest().authenticated())
+                .authorizeHttpRequests((requests)
+                -> requests
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/csrf-token").permitAll()
+                .requestMatchers("/api/auth/public/**").permitAll()
+                .requestMatchers("/oauth2/**").permitAll()
+                .requestMatchers("/login/oauth2/**").permitAll()
+                .requestMatchers("/").permitAll()
+                .anyRequest().authenticated())
+                .oauth2Login(oauth2 -> {
+                    oauth2.successHandler(oAuth2LoginSuccessHandler);
+                })
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setContentType("application/json");
@@ -69,15 +82,15 @@ public class SecurityConfig {
                 .build();
     }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
-            throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
+        @Bean
+        public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+                        throws Exception {
+                return authenticationConfiguration.getAuthenticationManager();
+        }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 
 }
