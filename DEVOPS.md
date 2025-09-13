@@ -219,7 +219,6 @@ deploy:
 
 ### Docker Best Practices
 ✅ Multi-stage builds for optimized images  
-✅ Non-root user execution  
 ✅ Minimal base images (JRE vs JDK)  
 ✅ Layer caching optimization  
 ✅ Comprehensive .dockerignore  
