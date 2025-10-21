@@ -36,6 +36,7 @@ build/
 ### AWS ###
 aws/
 awscliv2.zip
+.ebextensions/
 
 ### Claude Code ###
 .claude/
