@@ -64,7 +64,6 @@ jobs:
           fail-on-issues: false
           severity-threshold: medium
 
-
   test:
     docker:
       - image: cimg/openjdk:17.0
@@ -189,8 +188,8 @@ workflows:
             - test
             - scan
           filters:
-              branches:
-                only: develop
+            branches:
+              only: develop
 
   workflow-release:
     jobs:
@@ -224,13 +223,13 @@ workflows:
           requires:
             - test
           filters:
-              branches:
-                only: release
-      - deploy:
-          requires:
-            - publish
-            - scan
-            - snyk_sast
-          filters:
-              branches:
-                only: release
+            branches:
+              only: release
+      # - deploy:
+      #     requires:
+      #       - publish
+      #       - scan
+      #       - snyk_sast
+      #     filters:
+      #         branches:
+      #           only: release
